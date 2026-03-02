@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Compass</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --gold: #c9a84c;
+    --gold-light: #f0d080;
+    --gold-dark: #8a6a20;
+    --cream: #f5edd8;
+    --brown: #2a1f0e;
+    --parchment: #e8d8b0;
+    --red: #c0392b;
+    --shadow: rgba(0,0,0,0.5);
+  }
+
+  body {
+    background: var(--brown);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Cinzel', serif;
+    overflow: hidden;
+  }
+
+  /* Background texture */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      repeating-linear-gradient(0deg, transparent, transparent 50px, rgba(255,255,255,0.02) 50px, rgba(255,255,255,0.02) 51px),
+      repeating-linear-gradient(90deg, transparent, transparent 50px, rgba(255,255,255,0.02) 50px, rgba(255,255,255,0.02) 51px);
+    pointer-events: none;
+  }
+
+  .title {
+    color: var(--gold);
+    font-size: 1.1rem;
+    letter-spacing: 0.5em;
+    text-transform: uppercase;
+    margin-bottom: 30px;
+    opacity: 0.8;
+    text-shadow: 0 0 20px rgba(201,168,76,0.4);
+  }
+
+  .compass-wrapper {
+    position: relative;
+    width: 340px;
+    height: 340px;
+  }
+
+  /* Outer decorative ring */
+  .outer-ring {
+    position: absolute;
+    inset: -16px;
+    border-radius: 50%;
+    background: conic-gradient(
+      var(--gold-dark), var(--gold), var(--gold-light), var(--gold),
+      var(--gold-dark), var(--gold), var(--gold-light), var(--gold), var(--gold-dark)
+    );
+    box-shadow: 0 0 40px rgba(201,168,76,0.3), inset 0 0 20px rgba(0,0,0,0.5);
+  }
+
+  .outer-ring-inner {
+    position: absolute;
+    inset: 8px;
+    border-radius: 50%;
+    background: var(--brown);
+  }
+
+  /* Main compass face */
+  .compass-face {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, #f8f0dc, #e8d8b0 40%, #d4c090 70%, #b89a60);
+    box-shadow:
+      0 8px 32px rgba(0,0,0,0.6),
+      inset 0 2px 4px rgba(255,255,255,0.4),
+      inset 0 -4px 12px rgba(0,0,0,0.3);
+    overflow: hidden;
+  }
+
+  /* Decorative rose lines */
+  .compass-face::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background:
+      repeating-conic-gradient(
+        from 0deg,
+        rgba(139,105,40,0.15) 0deg 1deg,
+        transparent 1deg 45deg
+      );
+  }
+
+  /* Degree ring */
+  .degree-ring {
+    position: absolute;
+    inset: 12px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(139,105,40,0.5);
+  }
+
+  /* Cardinal labels canvas */
+  .labels-layer {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+  }
+
+  /* Tick marks */
+  .ticks-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  /* Needle container - rotates based on heading */
+  .needle-container {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    transition: transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+
+  /* Compass needle */
+  .needle {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    height: 100%;
+  }
+
+  .needle-north {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translateX(-50%) translateY(-100%);
+    width: 0;
+    height: 0;
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-bottom: 130px solid var(--red);
+    filter: drop-shadow(0 -2px 4px rgba(0,0,0,0.4));
+  }
+
+  .needle-north::after {
+    content: '';
+    position: absolute;
+    left: -6px;
+    bottom: -130px;
+    width: 0;
+    height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-bottom: 80px solid rgba(139,0,0,0.7);
+  }
+
+  .needle-south {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translateX(-50%);
+    width: 0;
+    height: 0;
+    border-left: 10px solid transparent;
+    border-right: 10px solid transparent;
+    border-top: 110px solid #4a3520;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
+  }
+
+  .needle-south::after {
+    content: '';
+    position: absolute;
+    left: -6px;
+    top: -110px;
+    width: 0;
+    height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 70px solid rgba(30,20,10,0.7);
+  }
+
+  /* Center jewel */
+  .center-jewel {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: radial-gradient(circle at 35% 35%, #fff, var(--gold) 50%, var(--gold-dark));
+    box-shadow: 0 2px 8px rgba(0,0,0,0.5), 0 0 12px rgba(201,168,76,0.5);
+    z-index: 10;
+  }
+
+  /* Bezel / info display */
+  .info-bar {
+    margin-top: 28px;
+    display: flex;
+    gap: 30px;
+    align-items: center;
+  }
+
+  .info-item {
+    text-align: center;
+  }
+
+  .info-label {
+    color: var(--gold-dark);
+    font-size: 0.55rem;
+    letter-spacing: 0.3em;
+    font-family: 'Courier Prime', monospace;
+    text-transform: uppercase;
+    opacity: 0.7;
+  }
+
+  .info-value {
+    color: var(--gold-light);
+    font-size: 1.4rem;
+    font-family: 'Courier Prime', monospace;
+    font-weight: 700;
+    text-shadow: 0 0 15px rgba(240,208,128,0.5);
+    min-width: 80px;
+    text-align: center;
+  }
+
+  .divider {
+    width: 1px;
+    height: 40px;
+    background: linear-gradient(to bottom, transparent, var(--gold-dark), transparent);
+  }
+
+  /* Permission message */
+  .permission-msg {
+    color: var(--gold);
+    font-family: 'Courier Prime', monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.15em;
+    opacity: 0.7;
+    margin-top: 20px;
+    text-align: center;
+    max-width: 280px;
+    line-height: 1.6;
+  }
+
+  /* Shimmer effect on needle */
+  @keyframes shimmer {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.85; }
+  }
+
+  .needle-container {
+    animation: shimmer 3s ease-in-out infinite;
+  }
+
+</style>
+</head>
+<body>
+
+<div class="title">Navigator's Compass</div>
+
+<div class="compass-wrapper">
+  <div class="outer-ring"><div class="outer-ring-inner"></div></div>
+  <div class="compass-face">
+    <div class="degree-ring"></div>
+    <canvas class="ticks-canvas" id="ticksCanvas"></canvas>
+    <div class="needle-container" id="needleContainer">
+      <div class="needle">
+        <div class="needle-north"></div>
+        <div class="needle-south"></div>
+      </div>
+    </div>
+    <div class="center-jewel"></div>
+  </div>
+</div>
+
+<div class="info-bar">
+  <div class="info-item">
+    <div class="info-label">Heading</div>
+    <div class="info-value" id="degrees">---°</div>
+  </div>
+  <div class="divider"></div>
+  <div class="info-item">
+    <div class="info-label">Direction</div>
+    <div class="info-value" id="cardinal">--</div>
+  </div>
+</div>
+
+<div class="permission-msg" id="statusMsg">Requesting compass access…</div>
+
+<script>
+const ticksCanvas = document.getElementById('ticksCanvas');
+const ctx = ticksCanvas.getContext('2d');
+const size = 340;
+ticksCanvas.width = size;
+ticksCanvas.height = size;
+const cx = size / 2, cy = size / 2, r = size / 2;
+
+function drawCompassFace() {
+  ctx.clearRect(0, 0, size, size);
+
+  // Draw tick marks
+  for (let i = 0; i < 360; i += 5) {
+    const rad = (i - 90) * Math.PI / 180;
+    const isMajor = i % 90 === 0;
+    const isMed = i % 45 === 0;
+    const isSmall = i % 10 === 0;
+
+    const outerR = r - 16;
+    const innerR = isMajor ? r - 42 : isMed ? r - 36 : isSmall ? r - 30 : r - 26;
+
+    ctx.beginPath();
+    ctx.moveTo(cx + Math.cos(rad) * outerR, cy + Math.sin(rad) * outerR);
+    ctx.lineTo(cx + Math.cos(rad) * innerR, cy + Math.sin(rad) * innerR);
+    ctx.strokeStyle = isMajor ? 'rgba(100,60,10,0.9)' : 'rgba(100,60,10,0.5)';
+    ctx.lineWidth = isMajor ? 2.5 : isSmall ? 1.5 : 1;
+    ctx.stroke();
+  }
+
+  // Draw cardinal letters
+  const cardinals = [
+    { label: 'N', angle: 0, color: '#c0392b' },
+    { label: 'E', angle: 90, color: '#5a3a10' },
+    { label: 'S', angle: 180, color: '#5a3a10' },
+    { label: 'W', angle: 270, color: '#5a3a10' },
+  ];
+
+  const intercardinals = ['NE', 'SE', 'SW', 'NW'];
+  intercardinals.forEach((lbl, i) => {
+    const angle = (45 + i * 90 - 90) * Math.PI / 180;
+    const textR = r - 52;
+    ctx.save();
+    ctx.translate(cx + Math.cos(angle) * textR, cy + Math.sin(angle) * textR);
+    ctx.rotate(angle + Math.PI / 2);
+    ctx.font = '700 11px Cinzel, serif';
+    ctx.fillStyle = 'rgba(100,70,20,0.7)';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(lbl, 0, 0);
+    ctx.restore();
+  });
+
+  cardinals.forEach(({ label, angle, color }) => {
+    const rad = (angle - 90) * Math.PI / 180;
+    const textR = r - 58;
+    ctx.save();
+    ctx.translate(cx + Math.cos(rad) * textR, cy + Math.sin(rad) * textR);
+    ctx.rotate(rad + Math.PI / 2);
+    ctx.font = `700 ${label === 'N' ? 22 : 18}px Cinzel, serif`;
+    ctx.fillStyle = color;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.shadowColor = color;
+    ctx.shadowBlur = label === 'N' ? 8 : 0;
+    ctx.fillText(label, 0, 0);
+    ctx.restore();
+  });
+
+  // Degree numbers every 30°
+  for (let i = 0; i < 360; i += 30) {
+    if (i % 90 === 0) continue;
+    const rad = (i - 90) * Math.PI / 180;
+    const textR = r - 46;
+    ctx.save();
+    ctx.translate(cx + Math.cos(rad) * textR, cy + Math.sin(rad) * textR);
+    ctx.rotate(rad + Math.PI / 2);
+    ctx.font = '500 9px Courier Prime, monospace';
+    ctx.fillStyle = 'rgba(100,70,20,0.6)';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(i, 0, 0);
+    ctx.restore();
+  }
+}
+
+drawCompassFace();
+
+// Compass logic
+const needleContainer = document.getElementById('needleContainer');
+const degreesEl = document.getElementById('degrees');
+const cardinalEl = document.getElementById('cardinal');
+const statusMsg = document.getElementById('statusMsg');
+
+function getCardinal(deg) {
+  const dirs = ['N','NNE','NE','ENE','E','ESE','SE','SSE','S','SSW','SW','WSW','W','WNW','NW','NNW'];
+  return dirs[Math.round(deg / 22.5) % 16];
+}
+
+let currentHeading = 0;
+
+function updateCompass(heading) {
+  currentHeading = heading;
+  // The needle points north: rotate the face opposite to heading
+  needleContainer.style.transform = `rotate(${-heading}deg)`;
+  degreesEl.textContent = `${Math.round(heading)}°`;
+  cardinalEl.textContent = getCardinal(heading);
+}
+
+function handleOrientation(e) {
+  let heading = null;
+  if (e.webkitCompassHeading !== undefined) {
+    heading = e.webkitCompassHeading;
+  } else if (e.alpha !== null) {
+    heading = (360 - e.alpha) % 360;
+  }
+  if (heading !== null) {
+    updateCompass(heading);
+    statusMsg.textContent = 'Live compass · Point device north';
+  }
+}
+
+async function initCompass() {
+  if (!window.DeviceOrientationEvent) {
+    statusMsg.textContent = 'Device orientation not supported on this device.';
+    // Demo mode
+    demoMode();
+    return;
+  }
+
+  if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+    try {
+      const perm = await DeviceOrientationEvent.requestPermission();
+      if (perm === 'granted') {
+        window.addEventListener('deviceorientationabsolute', handleOrientation, true);
+        window.addEventListener('deviceorientation', handleOrientation, true);
+        statusMsg.textContent = 'Permission granted · Live compass active';
+      } else {
+        statusMsg.textContent = 'Permission denied · Running demo mode';
+        demoMode();
+      }
+    } catch(e) {
+      statusMsg.textContent = 'Permission error · Running demo mode';
+      demoMode();
+    }
+  } else {
+    window.addEventListener('deviceorientationabsolute', handleOrientation, true);
+    window.addEventListener('deviceorientation', handleOrientation, true);
+    statusMsg.textContent = 'Compass active · Point device north';
+    // If no events come in 2s, start demo
+    setTimeout(() => {
+      if (currentHeading === 0 && degreesEl.textContent === '---°') {
+        statusMsg.textContent = 'No sensor detected · Running demo mode';
+        demoMode();
+      }
+    }, 2000);
+  }
+}
+
+function demoMode() {
+  let deg = 0;
+  let speed = 0.4;
+  let direction = 1;
+  function animate() {
+    deg = (deg + speed * direction + 360) % 360;
+    if (Math.random() < 0.005) direction *= -1;
+    speed = 0.2 + Math.random() * 0.5;
+    updateCompass(deg);
+    requestAnimationFrame(animate);
+  }
+  animate();
+}
+
+// Tap to request permission on iOS
+document.body.addEventListener('click', () => {
+  if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+    initCompass();
+  }
+});
+
+initCompass();
+</script>
+</body>
+</html>
